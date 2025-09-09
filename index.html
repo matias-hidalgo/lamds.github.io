@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login con Google</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <h2>Login con Google</h2>
+
+  <!-- Configuración de Google Sign-In -->
+  <div id="g_id_onload"
+       data-client_id="361739026466-42hbgqtb124tdle9n4iub06mam0urqn4.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+
+  <!-- Botón de login -->
+  <div class="g_id_signin" data-type="standard" data-size="large"></div>
+
+  <script>
+    // Aquí se recibe la respuesta de Google
+    function handleCredentialResponse(response) {
+      console.log("ID Token de Google: ", response.credential);
+      // 🔑 Aquí puedes enviar este token a tu backend para validarlo
+      // con la librería oficial de Google
+    }
+  </script>
+</body>
+</html>
