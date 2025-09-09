@@ -1,41 +1,115 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Login con Google</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>pdfdoit - Merge PDF (Sin Servidor)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .card { background: #222; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,.5); }
-    .card img { border-radius: 50%; margin-top: 1rem; }
-    h2 { margin-bottom: 1rem; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48; }
+    body { display: flex; flex-direction: column; min-height: 100vh; font-family: sans-serif; }
+    #mergeForm, #status { display: none; }
   </style>
 </head>
-<body>
-  <div id="g_id_onload"
-       data-client_id="361739026466-42hbgqtb124tdle9n4iub06mam0urqn4.apps.googleusercontent.com"
-       data-context="signin"
-       data-ux_mode="popup"
-       data-callback="handleCredentialResponse"
-       data-auto_prompt="false">
-  </div>
-  <div class="g_id_signin" data-type="standard" data-size="large"></div>
+<body class="bg-gradient-to-br from-red-50 to-white text-gray-800 flex flex-col">
 
-  <div id="user" class="card" style="display:none;"></div>
+  <header class="bg-white/90 backdrop-blur shadow sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold lowercase"><span class="text-red-600">pdf</span><span class="text-gray-700">doit</span></h1>
+      <div id="gSignInWrapper"></div>
+      <button id="logoutBtn" class="bg-red-600 text-white px-4 py-2 rounded hidden">Cerrar sesión</button>
+    </div>
+  </header>
 
+  <main class="flex-grow max-w-4xl mx-auto px-4 py-10">
+    <h2 class="text-3xl font-extrabold text-red-700 mb-8 lowercase">merge pdf</h2>
+    
+    <form id="mergeForm" class="bg-white rounded-xl shadow p-8 space-y-6">
+      <label class="block font-semibold text-gray-700" for="pdfFiles">Selecciona archivos PDF para fusionar (máx 5)</label>
+      <input id="pdfFiles" name="pdfFiles" type="file" accept="application/pdf" multiple required class="mt-2 w-full border border-gray-300 rounded px-3 py-2" />
+      <p id="fileCount" class="mt-1 text-gray-600 text-sm">Ningún archivo seleccionado</p>
+      <button id="mergeBtn" type="submit" disabled class="bg-red-600 text-white rounded-full px-6 py-3 font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed">Fusionar PDFs</button>
+    </form>
+
+    <p id="status" class="mt-6 text-center text-gray-700"></p>
+  </main>
+
+  <footer class="bg-white/90 backdrop-blur text-center py-4 text-gray-600 font-medium border-t border-red-100">
+    © 2025 pdfdoit. Todos los derechos reservados.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
   <script>
-    function parseJwt(token) {
-      return JSON.parse(atob(token.split('.')[1]));
-    }
+    const mergeForm = document.getElementById('mergeForm');
+    const pdfFilesInput = document.getElementById('pdfFiles');
+    const fileCountDisplay = document.getElementById('fileCount');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const status = document.getElementById('status');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    function parseJwt(token) { return JSON.parse(atob(token.split('.')[1])); }
+
     function handleCredentialResponse(response) {
-      const data = parseJwt(response.credential);
-      const userDiv = document.getElementById("user");
-      userDiv.style.display = "block";
-      userDiv.innerHTML = `<h2>Bienvenido</h2>
-                           <p>${data.name}</p>
-                           <p>${data.email}</p>
-                           <img src="${data.picture}" width="100">`;
+      const user = parseJwt(response.credential);
+      mergeForm.style.display = "block";
+      status.style.display = "block";
+      document.getElementById('gSignInWrapper').style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      console.log("Usuario logueado:", user);
     }
+
+    window.onload = function() {
+      google.accounts.id.initialize({
+        client_id: "361739026466-42hbgqtb124tdle9n4iub06mam0urqn4.apps.googleusercontent.com",
+        callback: handleCredentialResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("gSignInWrapper"),
+        { theme: "outline", size: "large" }
+      );
+      google.accounts.id.prompt();
+    };
+
+    logoutBtn.addEventListener('click', () => {
+      mergeForm.style.display = "none";
+      status.style.display = "none";
+      document.getElementById('gSignInWrapper').style.display = "block";
+      logoutBtn.style.display = "none";
+    });
+
+    pdfFilesInput.addEventListener('change', () => {
+      const files = pdfFilesInput.files;
+      if(files.length === 0) { fileCountDisplay.textContent = 'Ningún archivo seleccionado'; mergeBtn.disabled = true; return; }
+      if(files.length > 5) { fileCountDisplay.textContent = `Máximo 5 archivos permitidos.`; mergeBtn.disabled = true; return; }
+      fileCountDisplay.textContent = `${files.length} archivo(s) seleccionado(s)`; mergeBtn.disabled = false; status.textContent = '';
+    });
+
+    mergeForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      status.textContent = 'Procesando...';
+      const files = pdfFilesInput.files;
+      if(files.length === 0 || files.length > 5) return;
+
+      try {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        for(let i=0; i<files.length; i++){
+          const pdf = await PDFLib.PDFDocument.load(await files[i].arrayBuffer());
+          const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          copiedPages.forEach(page => mergedPdf.addPage(page));
+        }
+        const mergedPdfBytes = await mergedPdf.save();
+        const blob = new Blob([mergedPdfBytes], {type:'application/pdf'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `merged_${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        status.textContent = 'PDFs fusionados correctamente. Descarga iniciada.';
+      } catch(err) { console.error(err); status.textContent = 'Error al fusionar los PDFs.'; }
+    });
   </script>
 </body>
-</html> 
+</html>
