@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <title>Login con Google</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .card { background: #222; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,.5); }
+    .card img { border-radius: 50%; margin-top: 1rem; }
+    h2 { margin-bottom: 1rem; }
+  </style>
 </head>
 <body>
-  <h2>Login con Google</h2>
-
-  <!-- Configuración de Google Sign-In -->
   <div id="g_id_onload"
        data-client_id="361739026466-42hbgqtb124tdle9n4iub06mam0urqn4.apps.googleusercontent.com"
        data-context="signin"
@@ -16,16 +19,22 @@
        data-callback="handleCredentialResponse"
        data-auto_prompt="false">
   </div>
-
-  <!-- Botón de login -->
   <div class="g_id_signin" data-type="standard" data-size="large"></div>
 
+  <div id="user" class="card" style="display:none;"></div>
+
   <script>
-    // Aquí se recibe la respuesta de Google
+    function parseJwt(token) {
+      return JSON.parse(atob(token.split('.')[1]));
+    }
     function handleCredentialResponse(response) {
-      console.log("ID Token de Google: ", response.credential);
-      // 🔑 Aquí puedes enviar este token a tu backend para validarlo
-      // con la librería oficial de Google
+      const data = parseJwt(response.credential);
+      const userDiv = document.getElementById("user");
+      userDiv.style.display = "block";
+      userDiv.innerHTML = `<h2>Bienvenido</h2>
+                           <p>${data.name}</p>
+                           <p>${data.email}</p>
+                           <img src="${data.picture}" width="100">`;
     }
   </script>
 </body>
